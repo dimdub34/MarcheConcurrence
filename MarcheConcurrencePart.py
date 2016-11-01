@@ -6,10 +6,10 @@ from twisted.internet import defer
 from twisted.spread import pb
 from sqlalchemy.orm import relationship
 from sqlalchemy import Column, Integer, Float, ForeignKey, String
+from random import randint
 from server.servbase import Base
 from server.servparties import Partie
 from util.utiltools import get_module_attributes
-from util import utiltwisted
 import MarcheConcurrenceParams as pms
 
 
@@ -26,17 +26,21 @@ class PartieMC(Partie, pb.Referenceable):
         super(PartieMC, self).__init__(
             nom="MarcheConcurrence", nom_court="MC",
             joueur=joueur, le2mserv=le2mserv)
+        self._current_sequence = None
         self.MC_gain_ecus = 0
         self.MC_gain_euros = 0
+        if not hasattr(self.joueur, "payoff_infos"):
+           setattr(self.joueur, "payoff_infos", dict())
 
     @defer.inlineCallbacks
-    def configure(self):
+    def configure(self, current_sequence):
         """
         On envoie aussi cet instance car le remote a besoin d'envoyer des
         offres et d'informer des offres qu'il accepte
         :return:
         """
         logger.debug(u"{} Configure".format(self.joueur))
+        self._current_sequence = current_sequence
         yield (self.remote.callRemote("configure", get_module_attributes(pms),
                                       self, self.joueur.role))
         self.joueur.info(u"Ok")
@@ -51,6 +55,7 @@ class PartieMC(Partie, pb.Referenceable):
         """
         logger.debug(u"{} New Period".format(self.joueur))
         self.currentperiod = RepetitionsMC(period)
+        self.currentperiod.MC_sequence = self._current_sequence
         self.currentperiod.MC_group = self.joueur.groupe
         self.currentperiod.MC_role = self.joueur.role
         self.le2mserv.gestionnaire_base.ajouter(self.currentperiod)
@@ -79,12 +84,13 @@ class PartieMC(Partie, pb.Referenceable):
         self.currentperiod.MC_periodpayoff = 0
 
         if self.currentperiod.MC_transaction_price is not None:
+            self.currentperiod.MC_periodpayoff = pms.FORFAIT_TRANSACTION
             if self.joueur.role == pms.ACHETEUR:
-                self.currentperiod.MC_periodpayoff = \
+                self.currentperiod.MC_periodpayoff += \
                     self.currentperiod.MC_value_or_cost - \
                     self.currentperiod.MC_transaction_price
             else:
-                self.currentperiod.MC_periodpayoff = \
+                self.currentperiod.MC_periodpayoff += \
                 self.currentperiod.MC_transaction_price - \
                 self.currentperiod.MC_value_or_cost
 
@@ -119,8 +125,7 @@ class PartieMC(Partie, pb.Referenceable):
         self.joueur.info("Ok")
         self.joueur.remove_waitmode()
 
-    @defer.inlineCallbacks
-    def compute_partpayoff(self):
+    def compute_partpayoff(self, selected_period):
         """
         Compute the payoff for the part and set it on the remote.
         The remote stores it and creates the corresponding text for display
@@ -129,13 +134,17 @@ class PartieMC(Partie, pb.Referenceable):
         """
         logger.debug(u"{} Part Payoff".format(self.joueur))
 
-        self.MC_gain_ecus = self.currentperiod.MC_cumulativepayoff
-        self.MC_gain_euros = float(self.MC_gain_ecus) * float(pms.TAUX_CONVERSION)
-        yield (self.remote.callRemote(
-            "set_payoffs", self.MC_gain_euros, self.MC_gain_ecus))
+        self.MC_gain_ecus = self.periods[selected_period].MC_periodpayoff
+        self.MC_gain_euros = self.MC_gain_ecus * pms.TAUX_CONVERSION
 
-        logger.info(u'{} Payoff ecus {} Payoff euros {:.2f}'.format(
-            self.joueur, self.MC_gain_ecus, self.MC_gain_euros))
+        self.joueur.payoff_infos[self._current_sequence] = {
+            "period": selected_period, "gain_ecus": self.MC_gain_ecus,
+            "gain_euros": self.MC_gain_euros}
+
+        self.joueur.get_part("base").paiementFinal += self.MC_gain_euros
+
+        logger.info(u'{} Period: {} Payoff ecus {} Payoff euros {:.2f}'.format(
+            self.joueur, selected_period, self.MC_gain_ecus, self.MC_gain_euros))
 
     def create_offer(self, the_time, sender, sender_group, offer_type,
                      offer_amount):
@@ -171,10 +180,10 @@ class PartieMC(Partie, pb.Referenceable):
                        offer)
 
         # creation de l'offre chez les autres membres du groupe
-        for j in self.joueur.group_comp:
-            if j == self:
+        for j in self.joueur.group_composition:
+            if j == self.joueur:
                 continue
-            j.create_offer(*offer_infos)
+            j.get_part(self.nom).create_offer(*offer_infos)
 
         # creation de l'offre chez le joueur
         new_offer = self.create_offer(*offer_infos)
@@ -184,8 +193,8 @@ class PartieMC(Partie, pb.Referenceable):
 
         # envoi de l'offre sur les remote des membres du groupe
         new_offer_dict = new_offer.todict()
-        for j in self.joueur.group_comp:
-            yield (j.remote.callRemote("add_offer", new_offer_dict))
+        for j in self.joueur.group_composition:
+            yield (j.get_part(self.nom).remote.callRemote("add_offer", new_offer_dict))
 
     @defer.inlineCallbacks
     def remote_set_transaction(self, existing_offer):
@@ -215,10 +224,10 @@ class PartieMC(Partie, pb.Referenceable):
                        existing_offer["MC_offer"])
 
         # creation de l'offre chez les autres membres du groupe
-        for j in self.joueur.group_comp:
-            if j == self:
+        for j in self.joueur.group_composition:
+            if j == self.joueur:
                 continue
-            j.create_offer(*offer_infos)
+            j.get_part(self.nom).create_offer(*offer_infos)
 
         # creation de l'offre chez le joueur
         new_offer = self.create_offer(*offer_infos)
@@ -228,19 +237,32 @@ class PartieMC(Partie, pb.Referenceable):
 
         # creation de la transaction chez le joueur et l'autre joueur impliqué
         self.currentperiod.MC_transaction_price = new_offer.MC_offer
-        for j in self.joueur.group_comp:
-            if j.joueur.uid == existing_offer["MC_sender"]:
-                j.currentperiod.MC_transaction_price = existing_offer["MC_offer"]
+        for j in self.joueur.group_composition:
+            if j.uid == existing_offer["MC_sender"]:
+                j.get_part(self.nom).currentperiod.MC_transaction_price = \
+                    existing_offer["MC_offer"]
                 self.le2mserv.gestionnaire_graphique.infoserv(
                     u"G{} - {} with {} - price {}".format(
-                        self.joueur.groupe.split("_")[2], self.joueur, j.joueur,
+                        self.joueur.groupe.split("_")[2], self.joueur, j,
                         new_offer.MC_offer))
 
         # envoi de la transaction sur les remote des membres du groupe
-        for j in self.joueur.group_comp:
-            yield (j.remote.callRemote("add_transaction",
+        for j in self.joueur.group_composition:
+            yield (j.get_part(self.nom).remote.callRemote("add_transaction",
                                        existing_offer, new_offer.todict()))
         defer.returnValue(1)
+
+    @defer.inlineCallbacks
+    def display_role(self):
+        yield (self.remote.callRemote("display_role"))
+        self.joueur.info(u"Ok")
+        self.joueur.remove_waitmode()
+
+    @defer.inlineCallbacks
+    def display_payoffs(self):
+        yield (self.remote.callRemote("display_payoffs", self.joueur.payoff_infos))
+        self.joueur.info(u"Ok")
+        self.joueur.remove_waitmode()
 
 
 class RepetitionsMC(Base):
@@ -251,6 +273,7 @@ class RepetitionsMC(Base):
         ForeignKey("partie_MarcheConcurrence.partie_id"))
     MC_offers = relationship('OffersMC')
 
+    MC_sequence = Column(Integer)
     MC_period = Column(Integer)
     MC_treatment = Column(Integer)
     MC_group = Column(Integer)

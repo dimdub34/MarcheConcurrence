@@ -14,7 +14,10 @@ import random
 
 # variables --------------------------------------------------------------------
 BASELINE = 0
-TREATMENTS_NAMES = {BASELINE: "baseline"}
+TAXE_UNITE = 1
+TAXE_VALEUR = 2
+TREATMENTS_NAMES = {BASELINE: u"Baseline", TAXE_UNITE: u"Taxe unité",
+                    TAXE_VALEUR: u"Taxe valeur"}
 ACHETEUR = 0
 VENDEUR = 1
 OFFRE_ACHAT = 0
@@ -31,6 +34,10 @@ TAILLE_GROUPES = 4
 GROUPES_CHAQUE_PERIODE = False
 MONNAIE = u"ecu"
 DECIMALES = 2
+FORFAIT_TRANSACTION = 2
+PERIODE_ESSAI = True
+TAXE_UNITE_MONTANT = 2
+TAXE_VALEUR_MONTANT = 0.05
 
 # DECISION
 DECISION_MIN = 0

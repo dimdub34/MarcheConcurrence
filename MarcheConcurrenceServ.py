@@ -7,7 +7,8 @@ from random import choice
 from util import utiltools
 from util.utili18n import le2mtrans
 import MarcheConcurrenceParams as pms
-
+from MarcheConcurrenceGui import DConfigure
+from random import randint
 
 logger = logging.getLogger("le2m.{}".format(__name__))
 
@@ -15,6 +16,7 @@ logger = logging.getLogger("le2m.{}".format(__name__))
 class Serveur(object):
     def __init__(self, le2mserv):
         self._le2mserv = le2mserv
+        self._current_sequence = 0
 
         # creation of the menu (will be placed in the "part" menu on the
         # server screen)
@@ -25,16 +27,17 @@ class Serveur(object):
             display_information2(
                 utiltools.get_module_info(pms), le2mtrans(u"Parameters"))
         actions[le2mtrans(u"Start")] = lambda _: self._demarrer()
-        actions[le2mtrans(u"Display payoffs")] = \
-            lambda _: self._le2mserv.gestionnaire_experience.\
-            display_payoffs_onserver("MarcheConcurrence")
+        actions[u"Afficher les gains sur les postes"] = lambda _: self._display_payoffs()
         self._le2mserv.gestionnaire_graphique.add_topartmenu(
             u"Marché Taxation - Concurrence", actions)
 
     def _configure(self):
-        self._le2mserv.gestionnaire_graphique.display_information(
-            le2mtrans(u"There is no parameter to configure"))
-        return
+        screen_conf = DConfigure(self._le2mserv.gestionnaire_graphique.screen)
+        if screen_conf.exec_():
+            self._le2mserv.gestionnaire_graphique.infoserv(u"Traitement: {}".format(
+                pms.TREATMENTS_NAMES.get(pms.TREATMENT)))
+            self._le2mserv.gestionnaire_graphique.infoserv(u"Période d'essai: {}".format(
+                u"oui" if pms.PERIODE_ESSAI else u"non"))
 
     @defer.inlineCallbacks
     def _demarrer(self):
@@ -49,50 +52,55 @@ class Serveur(object):
 
         # init part ============================================================
         yield (self._le2mserv.gestionnaire_experience.init_part(
-            "MarcheConcurrence", "PartieMC",
-            "RemoteMC", pms))
+            "MarcheConcurrence", "PartieMC", "RemoteMC", pms))
         self._tous = self._le2mserv.gestionnaire_joueurs.get_players(
             'MarcheConcurrence')
 
-        # form groups ----------------------------------------------------------
-        if pms.TAILLE_GROUPES > 0:
-            try:
-                self._le2mserv.gestionnaire_groupes.former_groupes(
-                    self._le2mserv.gestionnaire_joueurs.get_players(),
-                    pms.TAILLE_GROUPES, forcer_nouveaux=True)
-            except ValueError as e:
-                self._le2mserv.gestionnaire_graphique.display_error(
-                    e.message)
-                return
+        if self._le2mserv.gestionnaire_experience.get_parts().count("MarcheConcurrence") == 1:
+            # form groups ------------------------------------------------------
+            if pms.TAILLE_GROUPES > 0:
+                try:
+                    self._le2mserv.gestionnaire_groupes.former_groupes(
+                        self._le2mserv.gestionnaire_joueurs.get_players(),
+                        pms.TAILLE_GROUPES, forcer_nouveaux=True)
+                except ValueError as e:
+                    self._le2mserv.gestionnaire_graphique.display_error(
+                        e.message)
+                    return
 
-        # set group comp -------------------------------------------------------
-        for num, comp in self._le2mserv.gestionnaire_groupes.get_groupes(
-                "MarcheConcurrence").viewitems():
-            for i in comp:
-                setattr(i.joueur, "group_comp", comp)
+            # set roles --------------------------------------------------------
+            self._le2mserv.gestionnaire_graphique.infoserv(u"*** Roles ***")
+            for num, comp in self._le2mserv.gestionnaire_groupes.get_groupes().viewitems():
+                for j in comp[: pms.TAILLE_GROUPES/2]:
+                    setattr(j, "role", pms.ACHETEUR)
+                for k in comp[pms.TAILLE_GROUPES/2:]:
+                    setattr(k, "role", pms.VENDEUR)
+                self._le2mserv.gestionnaire_graphique.infoserv(
+                    u"G{} - Buyers: {}".format(num.split("_")[2],
+                                               comp[:pms.TAILLE_GROUPES/2]))
+                self._le2mserv.gestionnaire_graphique.infoserv(
+                    u"G{} - Sellers: {}".format(num.split("_")[2],
+                                                comp[pms.TAILLE_GROUPES / 2:]))
 
-        # set roles ------------------------------------------------------------
-        self._le2mserv.gestionnaire_graphique.infoserv(u"*** Roles ***")
-        for num, comp in self._le2mserv.gestionnaire_groupes.get_groupes().viewitems():
-            for j in comp[: pms.TAILLE_GROUPES/2]:
-                setattr(j, "role", pms.ACHETEUR)
-            for k in comp[pms.TAILLE_GROUPES/2:]:
-                setattr(k, "role", pms.VENDEUR)
-            self._le2mserv.gestionnaire_graphique.infoserv(
-                u"G{} - Buyers: {}".format(num.split("_")[2],
-                                           comp[:pms.TAILLE_GROUPES/2]))
-            self._le2mserv.gestionnaire_graphique.infoserv(
-                u"G{} - Sellers: {}".format(num.split("_")[2],
-                                            comp[pms.TAILLE_GROUPES / 2:]))
+        # increment sequence
+        self._current_sequence += 1
+        self._le2mserv.gestionnaire_graphique.infoserv(u"Sequence {}".format(
+            self._current_sequence))
 
         # configure remotes ----------------------------------------------------
         # se fait à cet endroit car la part envoie le role au remote
+        logger.debug("Tous: {}".format(self._tous))
         yield (self._le2mserv.gestionnaire_experience.run_step(
-            le2mtrans(u"Configure"), self._tous, "configure"))
+            le2mtrans(u"Configure"), self._tous, "configure", self._current_sequence))
+
+        # display roles
+        yield (self._le2mserv.gestionnaire_experience.run_step(
+            u"Display roles", self._tous, "display_role"))
 
         # Start repetitions ====================================================
-        for period in range(1 if pms.NOMBRE_PERIODES else 0,
-                        pms.NOMBRE_PERIODES + 1):
+
+        period_start = 0 if pms.NOMBRE_PERIODES == 0 or pms.PERIODE_ESSAI else 1
+        for period in range(period_start, pms.NOMBRE_PERIODES + 1):
 
             if self._le2mserv.gestionnaire_experience.stop_repetitions:
                 break
@@ -147,5 +155,13 @@ class Serveur(object):
                 le2mtrans(u"Summary"), self._tous, "display_summary"))
         
         # End of part ==========================================================
+        selected_period = randint(1, pms.NOMBRE_PERIODES)
+        self._le2mserv.gestionnaire_graphique.infoserv(u"Payed period: {}".format(
+            selected_period))
         yield (self._le2mserv.gestionnaire_experience.finalize_part(
-            "MarcheConcurrence"))
+            "MarcheConcurrence", selected_period))
+
+    @defer.inlineCallbacks
+    def _display_payoffs(self):
+        yield (self._le2mserv.gestionnaire_experience.run_step(
+            u"Afficher les gains sur les postes", self._tous, "display_payoffs"))

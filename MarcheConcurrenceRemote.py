@@ -134,3 +134,16 @@ class RemoteMC(IRemote):
         concerned = self.le2mclt.uid in [sell_offer["MC_sender"],
                                          buy_offer["MC_sender"]]
         self._ecran_decision.add_transaction(sell_offer, buy_offer, concerned)
+
+    def remote_display_role(self):
+        if self.le2mclt.simulation:
+            return 1
+        else:
+            return self.le2mclt.get_remote("base").remote_display_information(
+                texts_MC.get_text_role(self._role))
+
+    def remote_display_payoffs(self, payoff_infos):
+        logger.debug(u"{} display_payoffs".format(self.le2mclt.uid))
+        txt_payoff = texts_MC.get_text_payoff(payoff_infos)
+        return self.le2mclt.get_remote("base").remote_display_information(
+            txt_payoff)

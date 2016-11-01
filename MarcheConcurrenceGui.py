@@ -106,12 +106,6 @@ class GuiDecision(QtGui.QDialog):
                 QtGui.QSpacerItem(20, 20, QtGui.QSizePolicy.Expanding,
                                   QtGui.QSizePolicy.Minimum))
             gridlayout.addLayout(self._layout_offer, CURRENT_LINE, 0)
-            # self._button_send_transaction = QtGui.QPushButton(
-            #     u"Accepter la meilleure offre en cours")
-            # self._button_send_transaction.setMaximumWidth(250)
-            # self._button_send_transaction.clicked.connect(
-            #     lambda _: self._send_transaction(pms.OFFRE_ACHAT))
-            # gridlayout.addWidget(self._button_send_transaction, CURRENT_LINE, 1)
 
         else:
 
@@ -132,12 +126,6 @@ class GuiDecision(QtGui.QDialog):
                 QtGui.QSpacerItem(20, 20, QtGui.QSizePolicy.Expanding,
                                   QtGui.QSizePolicy.Minimum))
             gridlayout.addLayout(self._layout_offer, CURRENT_LINE, 1)
-            # self._button_send_transaction = QtGui.QPushButton(
-            #     u"Accepter la meilleure offre en cours")
-            # self._button_send_transaction.setMaximumWidth(250)
-            # self._button_send_transaction.clicked.connect(
-            #     lambda _: self._send_transaction(pms.OFFRE_VENTE))
-            # gridlayout.addWidget(self._button_send_transaction, CURRENT_LINE, 0)
 
         self.setWindowTitle(trans_MC(u"Marché"))
         self.adjustSize()
@@ -165,8 +153,13 @@ class GuiDecision(QtGui.QDialog):
         if self._remote.role == pms.ACHETEUR:
             self._spin_offer.setValue(randint(0, self._remote.value_or_cost))
         else:
-            self._spin_offer.setValue(randint(self._remote.value_or_cost, 50))
-        # self._button_send_offer.click()
+            offer_min = self._remote.value_or_cost
+            if pms.TREATMENT == pms.TAXE_UNITE:
+                offer_min += pms.TAXE_UNITE_MONTANT
+            elif pms.TREATMENT == pms.TAXE_VALEUR:
+                offer_min += offer_min * pms.TAXE_VALEUR_MONTANT
+            self._spin_offer.setValue(randint(offer_min, 50))
+        self._button_send_offer.click()
         # else:
         #     self._button_send_transaction.click()
 
@@ -214,11 +207,16 @@ class GuiDecision(QtGui.QDialog):
 
         else:
 
-            if offer < self._remote.value_or_cost:
+            offer_min = self._remote.value_or_cost
+            if pms.TREATMENT == pms.TAXE_UNITE:
+                offer_min += pms.TAXE_UNITE_MONTANT
+            elif pms.TREATMENT == pms.TAXE_VALEUR:
+                offer_min += offer * pms.TAXE_VALEUR_MONTANT
+
+            if offer < offer_min:
                 QtGui.QMessageBox.warning(
                     self, u"Attention", u"Vous ne pouvez pas faire une offre "
-                                        u"inférieure à {}.".format(
-                        self._remote.value_or_cost))
+                                        u"inférieure à {}.".format(offer_min))
                 return
 
             if self._model_achats.rowCount() > 0:
@@ -353,3 +351,37 @@ class GuiDecision(QtGui.QDialog):
                 self.remove_offer(v)
 
 
+class DConfigure(QtGui.QDialog):
+    def __init__(self, parent):
+        QtGui.QDialog.__init__(self, parent)
+
+        layout = QtGui.QVBoxLayout()
+        self.setLayout(layout)
+
+        form = QtGui.QFormLayout()
+        layout.addLayout(form)
+
+        # treatment
+        self._combo_treatment = QtGui.QComboBox()
+        self._combo_treatment.addItems(list(sorted(pms.TREATMENTS_NAMES.viewvalues())))
+        self._combo_treatment.setCurrentIndex(pms.TREATMENT)
+        form.addRow(QtGui.QLabel(u"Traitement"), self._combo_treatment)
+
+        # periode essai
+        self._checkbox_essai = QtGui.QCheckBox()
+        self._checkbox_essai.setChecked(pms.PERIODE_ESSAI)
+        form.addRow(QtGui.QLabel(u"Période d'essai"), self._checkbox_essai)
+
+        button = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
+        button.accepted.connect(self._accept)
+        button.rejected.connect(self.reject)
+        layout.addWidget(button)
+
+        self.setWindowTitle(u"Configurer")
+        self.adjustSize()
+        self.setFixedSize(self.size())
+
+    def _accept(self):
+        pms.TREATMENT = self._combo_treatment.currentIndex()
+        pms.PERIODE_ESSAI = self._checkbox_essai.isChecked()
+        self.accept()

@@ -60,3 +60,11 @@ def get_text_summary(period_content):
     return txt
 
 
+def get_text_role(role):
+    txt = u"Vous êtes {}".format(u"acheteur" if role == pms.ACHETEUR else u"vendeur")
+    return txt
+
+
+def get_text_payoff(payoff_infos):
+    txt = u""
+    return txt
