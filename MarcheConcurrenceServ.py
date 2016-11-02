@@ -29,7 +29,7 @@ class Serveur(object):
         actions[le2mtrans(u"Start")] = lambda _: self._demarrer()
         actions[u"Afficher les gains sur les postes"] = lambda _: self._display_payoffs()
         self._le2mserv.gestionnaire_graphique.add_topartmenu(
-            u"Marché Taxation - Concurrence", actions)
+            u"Marché - Concurrence", actions)
 
     def _configure(self):
         screen_conf = DConfigure(self._le2mserv.gestionnaire_graphique.screen)
