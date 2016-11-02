@@ -366,11 +366,31 @@ class DConfigure(QtGui.QDialog):
         self._combo_treatment.addItems(list(sorted(pms.TREATMENTS_NAMES.viewvalues())))
         self._combo_treatment.setCurrentIndex(pms.TREATMENT)
         form.addRow(QtGui.QLabel(u"Traitement"), self._combo_treatment)
+        
+        # nombre de périodes
+        self._spin_periods = QtGui.QSpinBox()
+        self._spin_periods.setMinimum(0)
+        self._spin_periods.setMaximum(100)
+        self._spin_periods.setSingleStep(1)
+        self._spin_periods.setValue(pms.NOMBRE_PERIODES)
+        self._spin_periods.setButtonSymbols(QtGui.QSpinBox.NoButtons)
+        self._spin_periods.setMaximumWidth(50)
+        form.addRow(QtGui.QLabel(u"Nombre de périodes"), self._spin_periods)
 
         # periode essai
         self._checkbox_essai = QtGui.QCheckBox()
         self._checkbox_essai.setChecked(pms.PERIODE_ESSAI)
         form.addRow(QtGui.QLabel(u"Période d'essai"), self._checkbox_essai)
+        
+        # taille groupes
+        self._spin_groups = QtGui.QSpinBox()
+        self._spin_groups.setMinimum(2)
+        self._spin_groups.setMaximum(100)
+        self._spin_groups.setSingleStep(1)
+        self._spin_groups.setValue(pms.TAILLE_GROUPES)
+        self._spin_groups.setButtonSymbols(QtGui.QSpinBox.NoButtons)
+        self._spin_groups.setMaximumWidth(50)
+        form.addRow(QtGui.QLabel(u"Taille des groupes"), self._spin_groups)
 
         # temps de marché
         self._timeEdit = QtGui.QTimeEdit()
@@ -378,7 +398,9 @@ class DConfigure(QtGui.QDialog):
         self._timeEdit.setTime(QtCore.QTime(pms.TEMPS.hour,
                                             pms.TEMPS.minute,
                                             pms.TEMPS.second))
+        self._timeEdit.setMaximumWidth(100)
         form.addRow(QtGui.QLabel(u"Durée du marché"), self._timeEdit)
+
 
         button = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
         button.accepted.connect(self._accept)
@@ -393,4 +415,6 @@ class DConfigure(QtGui.QDialog):
         pms.TREATMENT = self._combo_treatment.currentIndex()
         pms.PERIODE_ESSAI = self._checkbox_essai.isChecked()
         pms.TEMPS = self._timeEdit.time().toPyTime()
+        pms.NOMBRE_PERIODES = self._spin_periods.value()
+        pms.TAILLE_GROUPES = self._spin_groups.value()
         self.accept()
