@@ -3,12 +3,11 @@
 import logging
 from collections import OrderedDict
 from twisted.internet import defer
-from random import choice
+from random import choice, randint
 from util import utiltools
 from util.utili18n import le2mtrans
 import MarcheConcurrenceParams as pms
 from MarcheConcurrenceGui import DConfigure
-from random import randint
 
 logger = logging.getLogger("le2m.{}".format(__name__))
 
@@ -94,7 +93,6 @@ class Serveur(object):
                 u"Display roles", self._tous, "display_role"))
 
         # configure remotes ----------------------------------------------------
-        logger.debug("Tous: {}".format(self._tous))
         yield (self._le2mserv.gestionnaire_experience.run_step(
             le2mtrans(u"Configure"), self._tous, "configure", self._current_sequence))
 
