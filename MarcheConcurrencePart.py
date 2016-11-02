@@ -159,7 +159,10 @@ class PartieMC(Partie, pb.Referenceable):
         """
         new_offer = OffersMC(
             the_time, sender, sender_group, offer_type, offer_amount)
-        self.currentperiod.MC_offers.append(new_offer)
+        # on enregistre dans la base uniquement si c'est le joueur à l'origine
+        # de l'offre, afin de ne pas enregistrer 50 fois la même offre
+        if sender == self.joueur.uid:
+            self.currentperiod.MC_offers.append(new_offer)
         return new_offer
 
     @defer.inlineCallbacks
@@ -179,11 +182,11 @@ class PartieMC(Partie, pb.Referenceable):
                        pms.OFFRE_ACHAT if self.joueur.role == pms.ACHETEUR else pms.OFFRE_VENTE,
                        offer)
 
-        # creation de l'offre chez les autres membres du groupe
-        for j in self.joueur.group_composition:
-            if j == self.joueur:
-                continue
-            j.get_part(self.nom).create_offer(*offer_infos)
+        # # creation de l'offre chez les autres membres du groupe
+        # for j in self.joueur.group_composition:
+        #     if j == self.joueur:
+        #         continue
+        #     j.get_part(self.nom).create_offer(*offer_infos)
 
         # creation de l'offre chez le joueur
         new_offer = self.create_offer(*offer_infos)
@@ -223,11 +226,11 @@ class PartieMC(Partie, pb.Referenceable):
                        pms.OFFRE_ACHAT if self.joueur.role == pms.ACHETEUR else pms.OFFRE_VENTE,
                        existing_offer["MC_offer"])
 
-        # creation de l'offre chez les autres membres du groupe
-        for j in self.joueur.group_composition:
-            if j == self.joueur:
-                continue
-            j.get_part(self.nom).create_offer(*offer_infos)
+        # # creation de l'offre chez les autres membres du groupe
+        # for j in self.joueur.group_composition:
+        #     if j == self.joueur:
+        #         continue
+        #     j.get_part(self.nom).create_offer(*offer_infos)
 
         # creation de l'offre chez le joueur
         new_offer = self.create_offer(*offer_infos)
