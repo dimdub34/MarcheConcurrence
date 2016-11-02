@@ -38,6 +38,8 @@ class Serveur(object):
                 pms.TREATMENTS_NAMES.get(pms.TREATMENT)))
             self._le2mserv.gestionnaire_graphique.infoserv(u"Période d'essai: {}".format(
                 u"oui" if pms.PERIODE_ESSAI else u"non"))
+            self._le2mserv.gestionnaire_graphique.infoserv(u"Durée du marché: {}".format(
+                pms.TEMPS))
 
     @defer.inlineCallbacks
     def _demarrer(self):
@@ -56,17 +58,22 @@ class Serveur(object):
         self._tous = self._le2mserv.gestionnaire_joueurs.get_players(
             'MarcheConcurrence')
 
-        if self._le2mserv.gestionnaire_experience.get_parts().count("MarcheConcurrence") == 1:
+        # increment sequence
+        self._current_sequence += 1
+        self._le2mserv.gestionnaire_graphique.infoserv(u"Sequence {}".format(
+            self._current_sequence))
+
+        if self._current_sequence == 1:
+
             # form groups ------------------------------------------------------
-            if pms.TAILLE_GROUPES > 0:
-                try:
-                    self._le2mserv.gestionnaire_groupes.former_groupes(
-                        self._le2mserv.gestionnaire_joueurs.get_players(),
-                        pms.TAILLE_GROUPES, forcer_nouveaux=True)
-                except ValueError as e:
-                    self._le2mserv.gestionnaire_graphique.display_error(
-                        e.message)
-                    return
+            try:
+                self._le2mserv.gestionnaire_groupes.former_groupes(
+                    self._le2mserv.gestionnaire_joueurs.get_players(),
+                    pms.TAILLE_GROUPES, forcer_nouveaux=True)
+            except ValueError as e:
+                self._le2mserv.gestionnaire_graphique.display_error(
+                    e.message)
+                return
 
             # set roles --------------------------------------------------------
             self._le2mserv.gestionnaire_graphique.infoserv(u"*** Roles ***")
@@ -82,20 +89,14 @@ class Serveur(object):
                     u"G{} - Sellers: {}".format(num.split("_")[2],
                                                 comp[pms.TAILLE_GROUPES / 2:]))
 
-        # increment sequence
-        self._current_sequence += 1
-        self._le2mserv.gestionnaire_graphique.infoserv(u"Sequence {}".format(
-            self._current_sequence))
+            # display roles
+            yield (self._le2mserv.gestionnaire_experience.run_step(
+                u"Display roles", self._tous, "display_role"))
 
         # configure remotes ----------------------------------------------------
-        # se fait à cet endroit car la part envoie le role au remote
         logger.debug("Tous: {}".format(self._tous))
         yield (self._le2mserv.gestionnaire_experience.run_step(
             le2mtrans(u"Configure"), self._tous, "configure", self._current_sequence))
-
-        # display roles
-        yield (self._le2mserv.gestionnaire_experience.run_step(
-            u"Display roles", self._tous, "display_role"))
 
         # Start repetitions ====================================================
 
@@ -156,6 +157,7 @@ class Serveur(object):
         
         # End of part ==========================================================
         selected_period = randint(1, pms.NOMBRE_PERIODES)
+        self._le2mserv.gestionnaire_graphique.infoserv(None)
         self._le2mserv.gestionnaire_graphique.infoserv(u"Payed period: {}".format(
             selected_period))
         yield (self._le2mserv.gestionnaire_experience.finalize_part(

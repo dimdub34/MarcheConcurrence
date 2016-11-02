@@ -372,6 +372,14 @@ class DConfigure(QtGui.QDialog):
         self._checkbox_essai.setChecked(pms.PERIODE_ESSAI)
         form.addRow(QtGui.QLabel(u"Période d'essai"), self._checkbox_essai)
 
+        # temps de marché
+        self._timeEdit = QtGui.QTimeEdit()
+        self._timeEdit.setDisplayFormat("hh:mm:ss")
+        self._timeEdit.setTime(QtCore.QTime(pms.TEMPS.hour,
+                                            pms.TEMPS.minute,
+                                            pms.TEMPS.second))
+        form.addRow(QtGui.QLabel(u"Durée du marché"), self._timeEdit)
+
         button = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
         button.accepted.connect(self._accept)
         button.rejected.connect(self.reject)
@@ -384,4 +392,5 @@ class DConfigure(QtGui.QDialog):
     def _accept(self):
         pms.TREATMENT = self._combo_treatment.currentIndex()
         pms.PERIODE_ESSAI = self._checkbox_essai.isChecked()
+        pms.TEMPS = self._timeEdit.time().toPyTime()
         self.accept()
