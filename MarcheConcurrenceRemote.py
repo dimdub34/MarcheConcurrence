@@ -21,9 +21,6 @@ class RemoteMC(IRemote):
     """
     def __init__(self, le2mclt):
         IRemote.__init__(self, le2mclt)
-        self._histo_vars = [
-            "MC_period", "MC_value_or_cost", "MC_transaction_price",
-            "MC_periodpayoff", "MC_cumulativepayoff"]
         self._role = None
         self._value_or_cost = None
 
@@ -35,7 +32,7 @@ class RemoteMC(IRemote):
     def value_or_cost(self):
         return self._value_or_cost
 
-    def remote_configure(self, params, server_part, role):
+    def remote_configure(self, params, server_part):
         """
         Set the same parameters as in the server side
         :param params:
@@ -45,7 +42,6 @@ class RemoteMC(IRemote):
         for k, v in params.viewitems():
             setattr(pms, k, v)
         self._server_part = server_part
-        self._role = role
         self._histo.append(texts_MC.get_histo_head(self.role))
 
     def remote_newperiod(self, period):
@@ -135,7 +131,9 @@ class RemoteMC(IRemote):
                                          buy_offer["MC_sender"]]
         self._ecran_decision.add_transaction(sell_offer, buy_offer, concerned)
 
-    def remote_display_role(self):
+    def remote_display_role(self, role):
+        self._role = role
+        self._histo_vars = texts_MC.get_histo_vars(self.role)
         if self.le2mclt.simulation:
             return 1
         else:

@@ -42,7 +42,7 @@ class PartieMC(Partie, pb.Referenceable):
         logger.debug(u"{} Configure".format(self.joueur))
         self._current_sequence = current_sequence
         yield (self.remote.callRemote("configure", get_module_attributes(pms),
-                                      self, self.joueur.role))
+                                      self))
         self.joueur.info(u"Ok")
 
     @defer.inlineCallbacks
@@ -83,16 +83,33 @@ class PartieMC(Partie, pb.Referenceable):
         logger.debug(u"{} Period Payoff".format(self.joueur))
         self.currentperiod.MC_periodpayoff = 0
 
-        if self.currentperiod.MC_transaction_price is not None:
-            self.currentperiod.MC_periodpayoff = pms.FORFAIT_TRANSACTION
+        if self.currentperiod.MC_transaction_price is not None:  # transaction
+
+            self.currentperiod.MC_transaction_prime = pms.FORFAIT_TRANSACTION
+            self.currentperiod.MC_periodpayoff = \
+                self.currentperiod.MC_transaction_prime
             if self.joueur.role == pms.ACHETEUR:
                 self.currentperiod.MC_periodpayoff += \
                     self.currentperiod.MC_value_or_cost - \
                     self.currentperiod.MC_transaction_price
-            else:
+
+            else:  # vendeur
                 self.currentperiod.MC_periodpayoff += \
                 self.currentperiod.MC_transaction_price - \
                 self.currentperiod.MC_value_or_cost
+
+                if pms.TREATMENT == pms.TAXE_UNITE:
+                    self.currentperiod.MC_transaction_taxe = \
+                        pms.TAXE_UNITE_MONTANT
+                    self.currentperiod.MC_periodpayoff -= \
+                        self.currentperiod.MC_transaction_taxe
+
+                elif pms.TREATMENT == pms.TAXE_VALEUR:
+                    self.currentperiod.MC_transaction_taxe = \
+                    self.currentperiod.MC_transaction_price * \
+                        pms.TAXE_VALEUR_MONTANT
+                    self.currentperiod.MC_periodpayoff -= \
+                        self.currentperiod.MC_transaction_taxe
 
         # cumulative payoff since the first period
         if self.currentperiod.MC_period < 2:
@@ -257,7 +274,7 @@ class PartieMC(Partie, pb.Referenceable):
 
     @defer.inlineCallbacks
     def display_role(self):
-        yield (self.remote.callRemote("display_role"))
+        yield (self.remote.callRemote("display_role", self.joueur.role))
         self.joueur.info(u"Ok")
         self.joueur.remove_waitmode()
 
@@ -283,6 +300,8 @@ class RepetitionsMC(Base):
     MC_role = Column(Integer)
     MC_value_or_cost = Column(Integer)
     MC_transaction_price = Column(Float)
+    MC_transaction_prime = Column(Integer)
+    MC_transaction_taxe = Column(Float)
     MC_periodpayoff = Column(Float)
     MC_cumulativepayoff = Column(Float)
 

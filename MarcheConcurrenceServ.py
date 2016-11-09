@@ -77,16 +77,19 @@ class Serveur(object):
             # set roles --------------------------------------------------------
             self._le2mserv.gestionnaire_graphique.infoserv(u"*** Roles ***")
             for num, comp in self._le2mserv.gestionnaire_groupes.get_groupes().viewitems():
-                for j in comp[: pms.TAILLE_GROUPES/2]:
-                    setattr(j, "role", pms.ACHETEUR)
-                for k in comp[pms.TAILLE_GROUPES/2:]:
-                    setattr(k, "role", pms.VENDEUR)
+                for i, m in enumerate(comp):
+                    if i % 2:
+                        setattr(m, "role", pms.ACHETEUR)
+                    else:
+                        setattr(m, "role", pms.VENDEUR)
                 self._le2mserv.gestionnaire_graphique.infoserv(
-                    u"G{} - Buyers: {}".format(num.split("_")[2],
-                                               comp[:pms.TAILLE_GROUPES/2]))
+                    u"G{} - Buyers: {}".format(
+                        num.split("_")[2],
+                        [j for j in comp if j.role == pms.ACHETEUR]))
                 self._le2mserv.gestionnaire_graphique.infoserv(
-                    u"G{} - Sellers: {}".format(num.split("_")[2],
-                                                comp[pms.TAILLE_GROUPES / 2:]))
+                    u"G{} - Sellers: {}".format(
+                        num.split("_")[2],
+                        [j for j in comp if j.role == pms.VENDEUR]))
 
             # display roles
             yield (self._le2mserv.gestionnaire_experience.run_step(

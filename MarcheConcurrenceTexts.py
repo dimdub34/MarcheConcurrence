@@ -21,14 +21,28 @@ except IOError:
     trans_MC = lambda x: x  # if there is an error, no translation
 
 
+def get_histo_vars(role):
+    histo_vars = ["MC_period", "MC_value_or_cost", "MC_transaction_price"]
+    if pms.TREATMENT == pms.TAXE_UNITE or pms.TREATMENT == pms.TAXE_VALEUR:
+        if role == pms.VENDEUR:
+            histo_vars.append("MC_transaction_taxe")
+        histo_vars.append("MC_transaction_prime")
+    histo_vars.append("MC_periodpayoff")
+    return histo_vars
+
+
 def get_histo_head(role):
     header = [le2mtrans(u"Period")]
     if role == pms.ACHETEUR:
         header.append(u"Valeur")
     else:
         header.append(u"Coût")
-    header.extend([u"Prix\nde\ntransaction", le2mtrans(u"Period\npayoff"),
-                 le2mtrans(u"Cumulative\npayoff")])
+    header.append(u"Prix\nde\ntransaction")
+    if pms.TREATMENT == pms.TAXE_UNITE or pms.TREATMENT == pms.TAXE_VALEUR:
+        if role == pms.VENDEUR:
+            header.append(u"Taxe")
+        header.append(u"Prime de transaction")
+    header.extend([le2mtrans(u"Period\npayoff")])
     return header
 
 
@@ -39,6 +53,12 @@ def get_text_explanation(role, value_or_cost):
     else:
         txt = u"Vous êtes vendeur. L'unité de bien vous coûte {}.".format(
             get_pluriel(value_or_cost, pms.MONNAIE))
+        if pms.TREATMENT == pms.TAXE_UNITE:
+            txt += u" Vous devez payer une taxe de {} pour la vente de votre " \
+                   u"unité.".format(get_pluriel(pms.TAXE_UNITE_MONTANT, pms.MONNAIE))
+        elif pms.TREATMENT == pms.TAXE_VALEUR:
+            txt += u" Vous devez payer une taxe de {}% sur le prix de vente " \
+                   u"de votre unité.".format(pms.TAXE_VALEUR_MONTANT)
     return txt
 
 
