@@ -22,11 +22,14 @@ except IOError:
 
 
 def get_histo_vars(role):
-    histo_vars = ["MC_period", "MC_value_or_cost", "MC_transaction_price"]
-    if pms.TREATMENT == pms.TAXE_UNITE or pms.TREATMENT == pms.TAXE_VALEUR:
-        if role == pms.VENDEUR:
+
+    histo_vars = ["MC_period", "MC_value_or_cost", "MC_transaction_price",
+                  "MC_transaction_prime"]
+
+    if (pms.TREATMENT == pms.TAXE_UNITE or pms.TREATMENT == pms.TAXE_VALEUR) and \
+        role == pms.VENDEUR:
             histo_vars.append("MC_transaction_taxe")
-        histo_vars.append("MC_transaction_prime")
+
     histo_vars.append("MC_periodpayoff")
     return histo_vars
 
@@ -37,11 +40,13 @@ def get_histo_head(role):
         header.append(u"Valeur")
     else:
         header.append(u"Coût")
-    header.append(u"Prix\nde\ntransaction")
-    if pms.TREATMENT == pms.TAXE_UNITE or pms.TREATMENT == pms.TAXE_VALEUR:
-        if role == pms.VENDEUR:
+
+    header.extend([u"Prix\nde\ntransaction", u"Prime\nde\ntransaction"])
+
+    if (pms.TREATMENT == pms.TAXE_UNITE or pms.TREATMENT == pms.TAXE_VALEUR) and \
+        role == pms.VENDEUR:
             header.append(u"Taxe")
-        header.append(u"Prime de transaction")
+
     header.extend([le2mtrans(u"Period\npayoff")])
     return header
 
@@ -63,18 +68,29 @@ def get_text_explanation(role, value_or_cost):
 
 
 def get_text_summary(period_content):
+
     if period_content["MC_role"] == pms.ACHETEUR:
+
         txt = u"Vous êtes acheteur. L'unité de bien vaut pour vous {}.".format(
             get_pluriel(period_content["MC_value_or_cost"], pms.MONNAIE))
+
         if period_content["MC_transaction_price"] is not None:
             txt += u" Vous avez acheté à {}.".format(
                 get_pluriel(period_content["MC_transaction_price"], pms.MONNAIE))
-    else:
+        else:
+            txt += u" Vous n'avez pas fait de transaction."
+
+    else:  # vendeur
+
         txt = u"Vous êtes vendeur. L'unité de bien vous coûte {}.".format(
             get_pluriel(period_content["MC_value_or_cost"], pms.MONNAIE))
+
         if period_content["MC_transaction_price"] is not None:
             u" Vous avez vendu à {}.".format(
                 get_pluriel(period_content["MC_transaction_price"], pms.MONNAIE))
+        else:
+            txt += u" Vous n'avez pas fait de transaction."
+
     txt += u"<br />Votre gain pour la période est de {}.".format(
         get_pluriel(period_content["MC_periodpayoff"], pms.MONNAIE))
     return txt
