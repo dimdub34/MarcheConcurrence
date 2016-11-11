@@ -42,7 +42,6 @@ class RemoteMC(IRemote):
         for k, v in params.viewitems():
             setattr(pms, k, v)
         self._server_part = server_part
-        self._histo.append(texts_MC.get_histo_head(self.role))
 
     def remote_newperiod(self, period):
         """
@@ -53,7 +52,9 @@ class RemoteMC(IRemote):
         logger.info(u"{} Period {}".format(self._le2mclt.uid, period))
         self.currentperiod = period
         if self.currentperiod == 1:
-            del self.histo[1:]
+            del self.histo[:]
+            self.histo.append(texts_MC.get_histo_head(self.role))
+            self._histo_vars = texts_MC.get_histo_vars(self.role)
 
     def remote_display_decision(self, value_or_cost):
         """
@@ -133,7 +134,6 @@ class RemoteMC(IRemote):
 
     def remote_display_role(self, role):
         self._role = role
-        self._histo_vars = texts_MC.get_histo_vars(self.role)
         if self.le2mclt.simulation:
             return 1
         else:

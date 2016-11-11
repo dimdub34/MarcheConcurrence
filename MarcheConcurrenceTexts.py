@@ -86,7 +86,7 @@ def get_text_summary(period_content):
             get_pluriel(period_content["MC_value_or_cost"], pms.MONNAIE))
 
         if period_content["MC_transaction_price"] is not None:
-            u" Vous avez vendu à {}.".format(
+            txt += u" Vous avez vendu à {}.".format(
                 get_pluriel(period_content["MC_transaction_price"], pms.MONNAIE))
         else:
             txt += u" Vous n'avez pas fait de transaction."
