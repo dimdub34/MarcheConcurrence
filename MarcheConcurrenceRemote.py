@@ -51,7 +51,7 @@ class RemoteMC(IRemote):
         """
         logger.info(u"{} Period {}".format(self._le2mclt.uid, period))
         self.currentperiod = period
-        if self.currentperiod == 1:
+        if self.currentperiod <= 1:
             del self.histo[:]
             self.histo.append(texts_MC.get_histo_head(self.role))
             self._histo_vars = texts_MC.get_histo_vars(self.role)

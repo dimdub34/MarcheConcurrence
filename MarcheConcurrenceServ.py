@@ -26,7 +26,8 @@ class Serveur(object):
             display_information2(
                 utiltools.get_module_info(pms), le2mtrans(u"Parameters"))
         actions[le2mtrans(u"Start")] = lambda _: self._demarrer()
-        actions[u"Afficher les gains sur les postes"] = lambda _: self._display_payoffs()
+        actions[u"Afficher les gains sur les postes"] = \
+            lambda _: self._display_payoffs()
         self._le2mserv.gestionnaire_graphique.add_topartmenu(
             u"Marché - Concurrence", actions)
 

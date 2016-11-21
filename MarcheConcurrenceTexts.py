@@ -104,7 +104,7 @@ def get_text_role(role):
 def get_text_payoff(payoff_infos):
     txt = u""
     for k, v in sorted(payoff_infos.viewitems()):
-        txt = u"A la partie {} c'est la période {} qui a été tirée au sort " \
+        txt += u"A la partie {} c'est la période {} qui a été tirée au sort " \
               u"pour la rémunération. Vous avez gagné {}.\n".format(
             k, v["period"], get_pluriel(v["gain_euros"], u"euro"))
     return txt

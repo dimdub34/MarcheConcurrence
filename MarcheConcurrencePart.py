@@ -88,6 +88,7 @@ class PartieMC(Partie, pb.Referenceable):
             self.currentperiod.MC_transaction_prime = pms.FORFAIT_TRANSACTION
             self.currentperiod.MC_periodpayoff = \
                 self.currentperiod.MC_transaction_prime
+
             if self.joueur.role == pms.ACHETEUR:
                 self.currentperiod.MC_periodpayoff += \
                     self.currentperiod.MC_value_or_cost - \
@@ -199,12 +200,6 @@ class PartieMC(Partie, pb.Referenceable):
                        pms.OFFRE_ACHAT if self.joueur.role == pms.ACHETEUR else pms.OFFRE_VENTE,
                        offer)
 
-        # # creation de l'offre chez les autres membres du groupe
-        # for j in self.joueur.group_composition:
-        #     if j == self.joueur:
-        #         continue
-        #     j.get_part(self.nom).create_offer(*offer_infos)
-
         # creation de l'offre chez le joueur
         new_offer = self.create_offer(*offer_infos)
         self.joueur.info(u"offer {} {}".format(
@@ -243,12 +238,6 @@ class PartieMC(Partie, pb.Referenceable):
                        pms.OFFRE_ACHAT if self.joueur.role == pms.ACHETEUR else pms.OFFRE_VENTE,
                        existing_offer["MC_offer"])
 
-        # # creation de l'offre chez les autres membres du groupe
-        # for j in self.joueur.group_composition:
-        #     if j == self.joueur:
-        #         continue
-        #     j.get_part(self.nom).create_offer(*offer_infos)
-
         # creation de l'offre chez le joueur
         new_offer = self.create_offer(*offer_infos)
         self.joueur.info(u"offer {} {}".format(
@@ -280,7 +269,8 @@ class PartieMC(Partie, pb.Referenceable):
 
     @defer.inlineCallbacks
     def display_payoffs(self):
-        yield (self.remote.callRemote("display_payoffs", self.joueur.payoff_infos))
+        yield (self.remote.callRemote("display_payoffs",
+                                      self.joueur.payoff_infos))
         self.joueur.info(u"Ok")
         self.joueur.remove_waitmode()
 
@@ -309,6 +299,8 @@ class RepetitionsMC(Base):
         self.MC_treatment = pms.TREATMENT
         self.MC_period = period
         self.MC_transaction_price = None
+        self.MC_transaction_prime = 0
+        self.MC_transaction_taxe = 0
         self.MC_decisiontime = 0
         self.MC_periodpayoff = 0
         self.MC_cumulativepayoff = 0

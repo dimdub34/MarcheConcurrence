@@ -24,8 +24,8 @@ OFFRE_ACHAT = 0
 OFFRE_VENTE = 1
 
 # parameters -------------------------------------------------------------------
-COUTS = [55, 55, 50, 45, 40, 35, 30, 25, 20, 15]
-VALEURS = [5, 5, 10, 15, 20, 25, 30, 35, 40, 45]
+COUTS = [5, 5, 10, 15, 20, 25, 30, 35, 40, 45]
+VALEURS = [55, 55, 50, 45, 40, 35, 30, 25, 20, 15]
 TEMPS = time(0, 2, 0)  # heures, minutes, secondes
 TREATMENT = BASELINE
 TAUX_CONVERSION = 1

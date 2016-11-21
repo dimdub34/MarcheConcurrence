@@ -291,12 +291,14 @@ class GuiDecision(QtGui.QDialog):
 
         if offer["MC_type"] == pms.OFFRE_ACHAT:
             item = MyStandardItem(offer["MC_offer"])
-            self._model_achats.insertRow(0, item)
+            # self._model_achats.insertRow(0, item)
+            self._model_achats.appendRow(item)
             self._sort_list(self._model_achats)
 
         else:
             item = MyStandardItem(offer["MC_offer"])
-            self._model_ventes.insertRow(0, item)
+            # self._model_ventes.insertRow(0, item)
+            self._model_ventes.appendRow(item)
             self._sort_list(self._model_ventes)
 
         self._offer_items[item] = offer
