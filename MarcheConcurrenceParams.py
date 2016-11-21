@@ -24,8 +24,8 @@ OFFRE_ACHAT = 0
 OFFRE_VENTE = 1
 
 # parameters -------------------------------------------------------------------
-COUTS = [10, 12, 14, 16, 18, 20, 22, 24, 26, 28]
-VALEURS = [29, 27, 25, 23, 21, 19, 17, 15, 13, 11]
+COUTS = [55, 55, 50, 45, 40, 35, 30, 25, 20, 15]
+VALEURS = [5, 5, 10, 15, 20, 25, 30, 35, 40, 45]
 TEMPS = time(0, 2, 0)  # heures, minutes, secondes
 TREATMENT = BASELINE
 TAUX_CONVERSION = 1
@@ -36,10 +36,9 @@ MONNAIE = u"euro"
 DECIMALES = 2
 FORFAIT_TRANSACTION = 1
 PERIODE_ESSAI = True
-TAXE_UNITE_MONTANT = 5
-TAXE_VALEUR_MONTANT = 0.20
+TAXE_UNITE_MONTANT = 20
+TAXE_VALEUR_MONTANT = 0.50
 
 # DECISION
 DECISION_MIN = 0
-DECISION_MAX = 100
-DECISION_STEP = 1
+DECISION_MAX = 1000
