@@ -149,19 +149,21 @@ class GuiDecision(QtGui.QDialog):
         self._defered.callback(1)
 
     def _play_auto(self):
-        # if randint(0, 1):
+        """
+        called by the timer when the program play automatically
+        :return:
+        """
         if self._remote.role == pms.ACHETEUR:
             self._spin_offer.setValue(randint(0, self._remote.value_or_cost))
+
         else:
             offer_min = self._remote.value_or_cost
             if pms.TREATMENT == pms.TAXE_UNITE:
                 offer_min += pms.TAXE_UNITE_MONTANT
             elif pms.TREATMENT == pms.TAXE_VALEUR:
                 offer_min += offer_min * pms.TAXE_VALEUR_MONTANT
-            self._spin_offer.setValue(randint(offer_min, 50))
+            self._spin_offer.setValue(randint(offer_min, pms.DECISION_MAX))
         self._button_send_offer.click()
-        # else:
-        #     self._button_send_transaction.click()
 
     def _enable_offer(self, true_or_false):
         self._spin_offer.setEnabled(true_or_false)
