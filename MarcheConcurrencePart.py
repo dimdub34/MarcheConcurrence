@@ -290,7 +290,7 @@ class RepetitionsMC(Base):
     MC_role = Column(Integer)
     MC_value_or_cost = Column(Integer)
     MC_transaction_price = Column(Float)
-    MC_transaction_prime = Column(Integer)
+    MC_transaction_prime = Column(Float)
     MC_transaction_taxe = Column(Float)
     MC_periodpayoff = Column(Float)
     MC_cumulativepayoff = Column(Float)
