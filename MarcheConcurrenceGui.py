@@ -158,17 +158,19 @@ class GuiDecision(QtGui.QDialog):
 
         else:
             offer_min = self._remote.value_or_cost
+            offer = 0
 
             if pms.TREATMENT == pms.TAXE_UNITE:
-                offer_min += pms.TAXE_UNITE_MONTANT
+                offer = randint(offer_min + pms.TAXE_UNITE_MONTANT,
+                                             max(pms.VALEURS) + 10)
 
             elif pms.TREATMENT == pms.TAXE_VALEUR:
-                offer = 0
                 while offer < (offer_min + offer * pms.TAXE_VALEUR_MONTANT):
                     offer = randint(int(offer_min * pms.TAXE_VALEUR_MONTANT),
-                            max(pms.VALEURS) + 10)
+                                    max(pms.VALEURS) + 10)
 
-            self._spin_offer.setValue(randint(offer_min, max(pms.VALEURS) + 10))
+            self._spin_offer.setValue(offer)
+
         self._button_send_offer.click()
 
     def _enable_offer(self, true_or_false):
