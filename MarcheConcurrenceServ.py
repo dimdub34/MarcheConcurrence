@@ -167,5 +167,8 @@ class Serveur(object):
 
     @defer.inlineCallbacks
     def _display_payoffs(self):
-        yield (self._le2mserv.gestionnaire_experience.run_step(
-            u"Afficher les gains sur les postes", self._tous, "display_payoffs"))
+        if self._le2mserv.gestionnaire_graphique.question(
+                u"Afficher les gains sur les postes clients?"):
+            yield (self._le2mserv.gestionnaire_experience.run_step(
+                u"Afficher les gains sur les postes", self._tous,
+                "display_payoffs"))
