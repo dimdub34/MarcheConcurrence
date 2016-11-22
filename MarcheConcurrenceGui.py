@@ -162,7 +162,7 @@ class GuiDecision(QtGui.QDialog):
                 offer_min += pms.TAXE_UNITE_MONTANT
             elif pms.TREATMENT == pms.TAXE_VALEUR:
                 offer_min += offer_min * pms.TAXE_VALEUR_MONTANT
-            self._spin_offer.setValue(randint(offer_min, pms.DECISION_MAX))
+            self._spin_offer.setValue(randint(offer_min, max(pms.VALEURS) + 10))
         self._button_send_offer.click()
 
     def _enable_offer(self, true_or_false):
