@@ -58,12 +58,14 @@ def get_text_explanation(role, value_or_cost):
     else:
         txt = u"Vous êtes vendeur. L'unité de bien vous coûte {}.".format(
             get_pluriel(value_or_cost, pms.MONNAIE))
+
         if pms.TREATMENT == pms.TAXE_UNITE:
             txt += u" Vous devez payer une taxe de {} pour la vente de votre " \
                    u"unité.".format(get_pluriel(pms.TAXE_UNITE_MONTANT, pms.MONNAIE))
+
         elif pms.TREATMENT == pms.TAXE_VALEUR:
-            txt += u" Vous devez payer une taxe de {}% sur le prix de vente " \
-                   u"de votre unité.".format(pms.TAXE_VALEUR_MONTANT)
+            txt += u" Vous devez payer une taxe de {:.0f}% sur le prix de vente " \
+                   u"de votre unité.".format(pms.TAXE_VALEUR_MONTANT * 100)
     return txt
 
 
