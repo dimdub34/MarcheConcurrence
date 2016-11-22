@@ -72,17 +72,17 @@ class GuiDecision(QtGui.QDialog):
         self._model_ventes = QtGui.QStandardItemModel()
         self._listview_ventes = QtGui.QListView()
         self._listview_ventes.setModel(self._model_ventes)
-        self._listview_ventes.setMaximumSize(300, 500)
+        self._listview_ventes.setMaximumSize(300, 600)
         gridlayout.addWidget(self._listview_ventes, CURRENT_LINE, 0)
 
         self._model_achats = QtGui.QStandardItemModel()
         self._listview_achats = QtGui.QListView()
         self._listview_achats.setModel(self._model_achats)
-        self._listview_achats.setMaximumSize(300, 500)
+        self._listview_achats.setMaximumSize(300, 600)
         gridlayout.addWidget(self._listview_achats, CURRENT_LINE, 1)
 
         self._listwidget_transactions = QtGui.QListWidget()
-        self._listwidget_transactions.setMaximumSize(300, 500)
+        self._listwidget_transactions.setMaximumSize(300, 600)
         gridlayout.addWidget(self._listwidget_transactions, CURRENT_LINE, 2)
 
         CURRENT_LINE += 1
