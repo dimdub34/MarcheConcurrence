@@ -160,7 +160,10 @@ class GuiDecision(QtGui.QDialog):
             offer_min = self._remote.value_or_cost
             offer = 0
 
-            if pms.TREATMENT == pms.TAXE_UNITE:
+            if pms.TREATMENT == pms.BASELINE:
+                offer = randint(offer_min, max(pms.VALEURS) + 10)
+
+            elif pms.TREATMENT == pms.TAXE_UNITE:
                 offer = randint(offer_min + pms.TAXE_UNITE_MONTANT,
                                              max(pms.VALEURS) + 10)
 
